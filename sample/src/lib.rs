@@ -3,8 +3,8 @@ use std::time::Instant;
 use weechat::bar::{BarItem, LightBarItem};
 use weechat::{
     weechat_plugin, ArgsWeechat, Buffer, CommandDescription, CommandHook,
-    Config, ConfigOption, ConfigSectionInfo, NickArgs, StringOption, Weechat,
-    WeechatPlugin, WeechatResult,
+    Config, ConfigOption, ConfigSectionInfo, HasHData, NickArgs, StringOption,
+    Weechat, WeechatPlugin, WeechatResult,
 };
 
 struct SamplePlugin {
@@ -59,6 +59,9 @@ impl WeechatPlugin for SamplePlugin {
             Some(SamplePlugin::close_cb),
             None,
         );
+
+        let buf_name: String =
+            buffer.get_hdata("buffer").unwrap().get_var("name").unwrap();
 
         buffer.print("Hello test buffer");
 

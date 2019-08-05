@@ -10,7 +10,18 @@ fn build(file: &str) -> Result<Bindings, ()> {
         "t_gui_nick_group",
         "t_hook",
     ];
-    const INCLUDED_VARS: &[&str] = &["WEECHAT_PLUGIN_API_VERSION"];
+    const INCLUDED_VARS: &[&str] = &[
+        "WEECHAT_PLUGIN_API_VERSION",
+        "WEECHAT_HDATA_OTHER",
+        "WEECHAT_HDATA_CHAR",
+        "WEECHAT_HDATA_INTEGER",
+        "WEECHAT_HDATA_LONG",
+        "WEECHAT_HDATA_STRING",
+        "WEECHAT_HDATA_POINTER",
+        "WEECHAT_HDATA_TIME",
+        "WEECHAT_HDATA_HASHTABLE",
+        "WEECHAT_HDATA_SHARED_STRING",
+    ];
     let mut builder = bindgen::Builder::default().rustfmt_bindings(true);
 
     builder = builder.header(file);
@@ -31,7 +42,9 @@ fn main() {
 
     let bindings = match bindings {
         Ok(b) => b,
-        Err(_) => build("src/weechat-plugin.h").expect("Unable to generate bindings"),
+        Err(_) => {
+            build("src/weechat-plugin.h").expect("Unable to generate bindings")
+        }
     };
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());

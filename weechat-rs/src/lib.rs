@@ -5,6 +5,7 @@ pub mod buffer;
 pub mod completion;
 pub mod config;
 pub mod config_options;
+pub mod hdata;
 pub mod hooks;
 pub mod infolist;
 pub mod plugin;
@@ -28,7 +29,7 @@ pub use hooks::{
 };
 
 pub use completion::{Completion, CompletionHook, CompletionPosition};
-
+pub use hdata::HasHData;
 pub use infolist::Infolist;
 
 use std::ffi::CString;
