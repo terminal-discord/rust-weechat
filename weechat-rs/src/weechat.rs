@@ -97,6 +97,11 @@ impl Weechat {
         Weechat { ptr }
     }
 
+    /// Obtain the raw pointer to the Weechat plugin
+    pub fn as_ptr(&self) -> *mut t_weechat_plugin {
+        self.ptr
+    }
+
     #[inline]
     pub(crate) fn get(&self) -> &t_weechat_plugin {
         unsafe { &*self.ptr }

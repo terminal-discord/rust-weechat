@@ -51,3 +51,32 @@ impl LossyCString {
         }
     }
 }
+
+/// A sealed type, allowing thread-unsafe weechat types to be safely
+/// passed between threads.
+///
+/// Sealed items can be created with the `sealed` function on some types,
+/// and then unsealed with the `unseal` function and a reference to the
+/// `Weechat` object.
+///
+/// If the sealed object has been sent to a background thread, then to obtain
+/// a weechat object you must use the `on_main` or `on_main_blocking` functions
+/// to run code on the main thread with a reference to the `Weechat` object.
+pub struct Sealed<T>(T);
+
+unsafe impl<T> Send for Sealed<T> {}
+unsafe impl<T> Sync for Sealed<T> {}
+
+impl<T> Sealed<T> {
+    /// Unseal an object, returning the sealed object.
+    ///
+    /// This requires a `Weechat` object, and because it is !Send
+    /// you must use the `on_main` function to safely obtain a Weechat
+    /// object.
+    ///
+    /// The Weechat reference is not used and serves only as a token
+    /// to ensure the function is called on the main thread.
+    pub fn unseal(self, _: &weechat::Weechat) -> T {
+        self.0
+    }
+}

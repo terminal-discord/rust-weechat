@@ -274,7 +274,7 @@ impl<'a> Default for NickArgs<'a> {
 impl Buffer {
     /// Create a high level Buffer object from a C plugin pointer and the
     /// buffer pointer.
-    pub(crate) fn from_ptr(
+    pub fn from_ptr(
         weechat_ptr: *mut t_weechat_plugin,
         buffer_ptr: *mut t_gui_buffer,
     ) -> Buffer {
@@ -282,6 +282,17 @@ impl Buffer {
             weechat: weechat_ptr,
             ptr: buffer_ptr,
         }
+    }
+
+    /// Create a sealed buffer.
+    ///
+    /// This prevents access to the buffer but allows it to be passed
+    /// between threads until it is unsealed.
+    pub fn seal(&self) -> crate::Sealed<Self> {
+        crate::Sealed(Buffer {
+            weechat: self.weechat,
+            ptr: self.ptr,
+        })
     }
 
     /// Get the Weechat plugin object from a Buffer object.
