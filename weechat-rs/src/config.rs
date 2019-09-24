@@ -146,6 +146,28 @@ impl<T> Config<T> {
         self.sections.insert(section_info.name.to_string(), section);
         &self.sections[section_info.name]
     }
+
+    /// Load configuration data from the disk
+    pub fn read(&self) {
+        let weechat = Weechat::from_ptr(self.weechat_ptr);
+
+        let config_read = weechat.get().config_read.unwrap();
+
+        unsafe {
+            config_read(self.ptr);
+        }
+    }
+
+    /// Save this config file to the disk
+    pub fn write(&self) {
+        let weechat = Weechat::from_ptr(self.weechat_ptr);
+
+        let config_write = weechat.get().config_write.unwrap();
+
+        unsafe {
+            config_write(self.ptr);
+        }
+    }
 }
 
 type WeechatOptChangeCbT = unsafe extern "C" fn(

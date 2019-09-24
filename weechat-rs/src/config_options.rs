@@ -1,6 +1,6 @@
 //! A module providing a typed api for Weechat configuration files
 
-use crate::Weechat;
+use crate::{LossyCString, Weechat};
 use std::borrow::Cow;
 use std::ffi::CStr;
 use weechat_sys::{t_config_option, t_weechat_plugin};
@@ -59,6 +59,9 @@ pub trait ConfigOption<'a> {
 
     /// Get the value of the option.
     fn value(&'a self) -> Self::R;
+
+    /// Set the value of the option
+    fn set(&'a self, value: Self::R) -> crate::OptionChanged;
 
     /// Resets the option to its default value.
     fn reset(&self, run_callback: bool) -> crate::OptionChanged {
@@ -129,6 +132,10 @@ impl<'a> ConfigOption<'a> for StringOption {
             CStr::from_ptr(string).to_string_lossy()
         }
     }
+
+    fn set(&'a self, value: Self::R) -> crate::OptionChanged {
+        set_str_option(self, value.as_ref())
+    }
 }
 
 impl<'a> ConfigOption<'a> for BooleanOption {
@@ -153,6 +160,10 @@ impl<'a> ConfigOption<'a> for BooleanOption {
         let ret = unsafe { config_boolean(self.get_ptr()) };
         ret != 0
     }
+
+    fn set(&'a self, value: Self::R) -> crate::OptionChanged {
+        set_str_option(self, if value { "true" } else { "false" })
+    }
 }
 
 impl<'a> ConfigOption<'a> for IntegerOption {
@@ -175,6 +186,10 @@ impl<'a> ConfigOption<'a> for IntegerOption {
         let weechat = self.get_weechat();
         let config_integer = weechat.get().config_integer.unwrap();
         unsafe { config_integer(self.get_ptr()) }
+    }
+
+    fn set(&'a self, value: Self::R) -> crate::OptionChanged {
+        set_str_option(self, &value.to_string())
     }
 }
 
@@ -202,10 +217,48 @@ impl<'a> ConfigOption<'a> for ColorOption {
             CStr::from_ptr(string).to_string_lossy()
         }
     }
+
+    fn set(&'a self, value: Self::R) -> crate::OptionChanged {
+        set_str_option(self, value.as_ref())
+    }
 }
 
 impl PartialEq<bool> for BooleanOption {
     fn eq(&self, other: &bool) -> bool {
         self.value() == *other
+    }
+}
+
+impl StringOption {
+    /// Set the value of the option
+    pub fn set(&self, value: &str) -> crate::OptionChanged {
+        set_str_option(self, value)
+    }
+}
+
+impl ColorOption {
+    /// Set the value of the option
+    pub fn set(&self, value: &str) -> crate::OptionChanged {
+        set_str_option(self, value)
+    }
+}
+
+impl IntegerOption {
+    /// Set the value of the option, only valid for options with `string_values`
+    pub fn set(&self, value: &str) -> crate::OptionChanged {
+        set_str_option(self, value)
+    }
+}
+
+fn set_str_option<'a>(
+    option: &impl ConfigOption<'a>,
+    value: &str,
+) -> crate::OptionChanged {
+    let weechat = option.get_weechat();
+    let config_option_set = weechat.get().config_option_set.unwrap();
+    unsafe {
+        let string = LossyCString::new(value);
+        let ret = config_option_set(option.get_ptr(), string.as_ptr(), 1);
+        crate::OptionChanged::from_int(ret)
     }
 }
