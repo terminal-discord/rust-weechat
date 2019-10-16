@@ -16,3 +16,4 @@ license = "MIT"
 libc = "0.2.48"
 weechat-macro = { path = "../weechat-macro" }
 weechat-sys = { path = "../weechat-sys" }
+chrono = "0.4.7"

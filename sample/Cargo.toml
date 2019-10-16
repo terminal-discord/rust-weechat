@@ -15,3 +15,4 @@ crate-type = ["dylib"]
 libc = "0.2.60"
 weechat = { path = "../weechat-rs" }
 weechat-sys = { path = "../weechat-sys" }
+chrono = "0.4.7"
