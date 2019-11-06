@@ -24,6 +24,59 @@ impl HData {
 
         HDataType::hdata_value(self, name)
     }
+
+    /// Update the value of a variable in a hdata.
+    pub fn update_var<T: HDataType>(&self, name: &str, value: T) -> usize {
+        let weechat = Weechat::from_ptr(self.weechat_ptr);
+
+        HDataType::hdata_set_value(self, name, value)
+    }
+
+    /// Retrieve a variable as a string.
+    ///
+    /// If the data is not compatible bad things will happen.
+    pub unsafe fn get_string_unchecked(
+        &self,
+        name: &str,
+    ) -> Option<Cow<'_, str>> {
+        let weechat = Weechat::from_ptr(self.weechat_ptr);
+        let hdata_string = weechat.get().hdata_string.unwrap();
+
+        let name = LossyCString::new(name);
+
+        unsafe {
+            let ret = hdata_string(self.ptr, self.object, name.as_ptr());
+            if ret.is_null() {
+                None
+            } else {
+                Some(CStr::from_ptr(ret).to_string_lossy())
+            }
+        }
+    }
+
+    /// Retrieve a variable as a integer.
+    ///
+    /// If the data is not compatible bad things will happen.
+    pub unsafe fn get_i32_unchecked(&self, name: &str) -> i32 {
+        let weechat = Weechat::from_ptr(self.weechat_ptr);
+        let hdata_integer = weechat.get().hdata_integer.unwrap();
+
+        let name = LossyCString::new(name);
+
+        unsafe { hdata_integer(self.ptr, self.object, name.as_ptr()) }
+    }
+
+    /// Retrieve a variable as a long.
+    ///
+    /// If the data is not compatible bad things will happen.
+    pub unsafe fn get_i64_unchecked(&self, name: &str) -> i64 {
+        let weechat = Weechat::from_ptr(self.weechat_ptr);
+        let hdata_long = weechat.get().hdata_long.unwrap();
+
+        let name = LossyCString::new(name);
+
+        unsafe { hdata_long(self.ptr, self.object, name.as_ptr()) }
+    }
 }
 
 /// A trait for types that have hdata.
@@ -58,6 +111,10 @@ impl HasHData for Buffer {
 pub trait HDataType: Sized {
     /// Retrieve the value of a hdata variable by name.
     fn hdata_value(hdata: &HData, name: &str) -> Option<Self>;
+
+    /// Set the value of a hdata variable by name.
+    // TODO: Figure out ownership issues
+    fn hdata_set_value(hdata: &HData, name: &str, value: Self) -> usize;
 }
 
 impl HDataType for Cow<'_, str> {
@@ -83,11 +140,32 @@ impl HDataType for Cow<'_, str> {
             }
         }
     }
+
+    fn hdata_set_value(hdata: &HData, name: &str, value: Self) -> usize {
+        let weechat = Weechat::from_ptr(hdata.weechat_ptr);
+        let hdata_update = weechat.get().hdata_update.unwrap();
+
+        let hashtable = weechat
+            .new_hashtable(
+                1,
+                crate::HashtableItemType::String,
+                crate::HashtableItemType::String,
+            )
+            .unwrap();
+
+        hashtable.set(name, &value);
+
+        unsafe { hdata_update(hdata.ptr, hdata.object, hashtable.ptr) as usize }
+    }
 }
 
 impl HDataType for String {
     fn hdata_value(hdata: &HData, name: &str) -> Option<Self> {
         HDataType::hdata_value(hdata, name).map(Cow::into_owned)
+    }
+
+    fn hdata_set_value(hdata: &HData, name: &str, value: Self) -> usize {
+        HDataType::hdata_set_value(hdata, name, Cow::from(value))
     }
 }
 
@@ -110,6 +188,23 @@ impl HDataType for char {
             c_char.try_into().map(|ch: u8| ch as char).ok()
         }
     }
+
+    fn hdata_set_value(hdata: &HData, name: &str, value: Self) -> usize {
+        let weechat = Weechat::from_ptr(hdata.weechat_ptr);
+        let hdata_update = weechat.get().hdata_update.unwrap();
+
+        let hashtable = weechat
+            .new_hashtable(
+                1,
+                crate::HashtableItemType::String,
+                crate::HashtableItemType::String,
+            )
+            .unwrap();
+
+        hashtable.set(name, &value.to_string());
+
+        unsafe { hdata_update(hdata.ptr, hdata.object, hashtable.ptr) as usize }
+    }
 }
 
 impl HDataType for i64 {
@@ -130,6 +225,23 @@ impl HDataType for i64 {
             Some(hdata_long(hdata.ptr, hdata.object, name.as_ptr()))
         }
     }
+
+    fn hdata_set_value(hdata: &HData, name: &str, value: Self) -> usize {
+        let weechat = Weechat::from_ptr(hdata.weechat_ptr);
+        let hdata_update = weechat.get().hdata_update.unwrap();
+
+        let hashtable = weechat
+            .new_hashtable(
+                1,
+                crate::HashtableItemType::String,
+                crate::HashtableItemType::Integer,
+            )
+            .unwrap();
+
+        hashtable.set(name, &value.to_string());
+
+        unsafe { hdata_update(hdata.ptr, hdata.object, hashtable.ptr) as usize }
+    }
 }
 
 impl HDataType for i32 {
@@ -149,6 +261,23 @@ impl HDataType for i32 {
 
             Some(hdata_integer(hdata.ptr, hdata.object, name.as_ptr()))
         }
+    }
+
+    fn hdata_set_value(hdata: &HData, name: &str, value: Self) -> usize {
+        let weechat = Weechat::from_ptr(hdata.weechat_ptr);
+        let hdata_update = weechat.get().hdata_update.unwrap();
+
+        let hashtable = weechat
+            .new_hashtable(
+                1,
+                crate::HashtableItemType::String,
+                crate::HashtableItemType::Integer,
+            )
+            .unwrap();
+
+        hashtable.set(name, &value.to_string());
+
+        unsafe { hdata_update(hdata.ptr, hdata.object, hashtable.ptr) as usize }
     }
 }
 
@@ -172,6 +301,23 @@ impl HDataType for DateTime<Utc> {
 
             Some(DateTime::from_utc(naive, Utc))
         }
+    }
+
+    fn hdata_set_value(hdata: &HData, name: &str, value: Self) -> usize {
+        let weechat = Weechat::from_ptr(hdata.weechat_ptr);
+        let hdata_update = weechat.get().hdata_update.unwrap();
+
+        let hashtable = weechat
+            .new_hashtable(
+                1,
+                crate::HashtableItemType::String,
+                crate::HashtableItemType::Integer,
+            )
+            .unwrap();
+
+        hashtable.set(name, &value.timestamp().to_string());
+
+        unsafe { hdata_update(hdata.ptr, hdata.object, hashtable.ptr) as usize }
     }
 }
 
@@ -201,6 +347,23 @@ impl HDataType for HDataPointer {
                 weechat: hdata.weechat_ptr,
             })
         }
+    }
+
+    fn hdata_set_value(hdata: &HData, name: &str, value: Self) -> usize {
+        let weechat = Weechat::from_ptr(hdata.weechat_ptr);
+        let hdata_update = weechat.get().hdata_update.unwrap();
+
+        let hashtable = weechat
+            .new_hashtable(
+                1,
+                crate::HashtableItemType::String,
+                crate::HashtableItemType::Integer,
+            )
+            .unwrap();
+
+        hashtable.set(name, &(value.ptr as usize).to_string());
+
+        unsafe { hdata_update(hdata.ptr, hdata.object, hashtable.ptr) as usize }
     }
 }
 

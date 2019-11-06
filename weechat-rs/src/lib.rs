@@ -5,6 +5,7 @@ pub mod buffer;
 pub mod completion;
 pub mod config;
 pub mod config_options;
+pub mod hashtable;
 pub mod hdata;
 pub mod hooks;
 pub mod infolist;
@@ -29,6 +30,7 @@ pub use hooks::{
 };
 
 pub use completion::{Completion, CompletionHook, CompletionPosition};
+pub use hashtable::{Hashtable, HashtableItemType};
 pub use hdata::HasHData;
 pub use infolist::Infolist;
 
