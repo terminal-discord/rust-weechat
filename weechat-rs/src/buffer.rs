@@ -564,6 +564,18 @@ impl Buffer {
         self.set("localvar_set_no_log", "1");
     }
 
+    /// Mark previous messages as read, setting the unread marker after the current last line of the
+    /// buffer.
+    pub fn mark_read(&self) {
+        self.set("unread", "");
+    }
+
+    /// Remove buffer from the hotlist.
+    // TODO: Add support for other capabilities
+    pub fn clear_hotlist(&self) {
+        self.set("hotlist", "-1");
+    }
+
     /// Clear buffer contents
     pub fn clear(&self) {
         let weechat = Weechat::from_ptr(self.weechat);
