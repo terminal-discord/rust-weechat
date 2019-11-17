@@ -327,6 +327,27 @@ pub struct HDataPointer {
     weechat: *mut t_weechat_plugin,
 }
 
+impl HDataPointer {
+    /// Moves a pointer to a new location in a list
+    pub fn advance(&self, hdata: &HData, count: i32) -> Option<HDataPointer> {
+        let weechat = Weechat::from_ptr(hdata.weechat_ptr);
+        let hdata_move = weechat.get().hdata_move.unwrap();
+
+        unsafe {
+            let new_ptr = hdata_move(hdata.ptr, self.ptr, count);
+
+            if new_ptr.is_null() {
+                None
+            } else {
+                Some(HDataPointer {
+                    ptr: new_ptr,
+                    weechat: self.weechat,
+                })
+            }
+        }
+    }
+}
+
 impl HDataType for HDataPointer {
     fn hdata_value(hdata: &HData, name: &str) -> Option<Self> {
         let weechat = Weechat::from_ptr(hdata.weechat_ptr);
