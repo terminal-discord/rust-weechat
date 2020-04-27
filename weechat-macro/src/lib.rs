@@ -94,6 +94,22 @@ impl Parse for WeechatPluginInfo {
     }
 }
 
+/// Register a struct that implements the `WeechatPlugin` trait as a plugin.
+///
+/// This configures the Weechat init and end method as well as additonal plugin
+/// metadata.
+///
+/// # Example
+/// ```ignore
+/// weechat_plugin!(
+///     SamplePlugin,
+///     name: "rust_sample",
+///     author: "poljar",
+///     description: "",
+///     version: "0.1.0",
+///     license: "MIT"
+/// );
+/// ```
 #[proc_macro]
 pub fn weechat_plugin(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let WeechatPluginInfo {
@@ -133,16 +149,25 @@ pub fn weechat_plugin(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         static mut __PLUGIN: Option<#plugin> = None;
 
         #[no_mangle]
-        pub extern "C" fn weechat_plugin_init(
+        /// This function is called when plugin is loaded by WeeChat.
+        ///
+        /// # Safety
+        /// This function needs to be an extern C function and it can't be
+        /// mangled, otherwise Weechat will not find the symbol.
+        pub unsafe extern "C" fn weechat_plugin_init(
             plugin: *mut weechat_sys::t_weechat_plugin,
             argc: libc::c_int,
             argv: *mut *mut ::libc::c_char,
         ) -> libc::c_int {
-            let plugin = Weechat::from_ptr(plugin);
+            let weechat = unsafe {
+                Weechat::from_ptr(plugin)
+            };
             let args = ArgsWeechat::new(argc, argv);
-            match <#plugin as ::weechat::WeechatPlugin>::init(plugin, args) {
+            match <#plugin as ::weechat::WeechatPlugin>::init(weechat, args) {
                 Ok(p) => {
-                    unsafe { __PLUGIN = Some(p) }
+                    unsafe {
+                        __PLUGIN = Some(p);
+                    }
                     return weechat_sys::WEECHAT_RC_OK;
                 }
                 Err(_e) => {
@@ -152,11 +177,25 @@ pub fn weechat_plugin(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         }
 
         #[no_mangle]
-        pub extern "C" fn weechat_plugin_end(_plugin: *mut weechat_sys::t_weechat_plugin) -> ::libc::c_int {
+        /// This function is called when plugin is unloaded by WeeChat.
+        ///
+        /// # Safety
+        /// This function needs to be an extern C function and it can't be
+        /// mangled, otherwise Weechat will not find the symbol.
+        pub unsafe extern "C" fn weechat_plugin_end(_plugin: *mut weechat_sys::t_weechat_plugin) -> ::libc::c_int {
             unsafe {
                 __PLUGIN = None;
             }
             weechat_sys::WEECHAT_RC_OK
+        }
+
+        pub(crate) fn plugin() -> &'static mut #plugin {
+            unsafe {
+                match &mut __PLUGIN {
+                    Some(p) => p,
+                    None => panic!("Weechat plugin isn't initialized"),
+                }
+            }
         }
     };
 
