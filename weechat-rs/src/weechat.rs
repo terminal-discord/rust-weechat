@@ -2,7 +2,7 @@
 
 use weechat_sys::t_weechat_plugin;
 
-use crate::LossyCString;
+use crate::{ConfigOption, LossyCString, StringOption};
 use libc::{c_char, c_int};
 use std::borrow::Cow;
 use std::ffi::CStr;
@@ -203,6 +203,22 @@ impl Weechat {
                 None
             } else {
                 Some(CStr::from_ptr(option).to_string_lossy())
+            }
+        }
+    }
+
+    /// Get value of a plugin option
+    pub fn get_string_option(&self, option: &str) -> Option<StringOption> {
+        let config_get = self.get().config_get.unwrap();
+
+        let option_name = LossyCString::new(option);
+
+        unsafe {
+            let option = config_get(option_name.as_ptr());
+            if option.is_null() {
+                None
+            } else {
+                Some(StringOption::from_ptrs(option, self.ptr))
             }
         }
     }
