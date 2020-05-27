@@ -1437,4 +1437,10 @@ impl Buffer<'_> {
     pub fn unhide(&self) {
         self.set("hidden", "0");
     }
+
+    /// Mark previous messages as read, setting the unread marker after the current last line of the
+    /// buffer.
+    pub fn mark_read(&self) {
+        self.set("unread", "");
+    }
 }
