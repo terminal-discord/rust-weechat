@@ -1,5 +1,6 @@
 //! Weechat Buffer module containing Buffer and Nick types.
 
+mod hotlist;
 mod lines;
 mod nick;
 mod nickgroup;
@@ -27,6 +28,7 @@ use weechat_sys::{
 };
 
 pub use crate::buffer::{
+    hotlist::HotlistPriority,
     lines::{BufferLine, BufferLines, LineData},
     nick::{Nick, NickSettings},
     nickgroup::NickGroup,
