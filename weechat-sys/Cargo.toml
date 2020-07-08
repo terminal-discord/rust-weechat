@@ -8,8 +8,10 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/poljar/rust-weechat"
 
-[build-dependencies]
-bindgen = "0.58.1"
+[build-dependencies.bindgen]
+version = "0.58.1"
+default-features = false
+features = ["runtime", "which-rustfmt"]
 
 [dependencies]
 libc = "0.2.93"
