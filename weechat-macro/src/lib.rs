@@ -214,8 +214,9 @@ pub fn plugin(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             };
             let args = Args::new(argc, argv);
             match <#plugin as ::weechat::Plugin>::init(&weechat, args) {
-                Ok(p) => {
+                Ok(mut p) => {
                     unsafe {
+                        p.ready(&weechat);
                         __PLUGIN = Some(p);
                     }
                     return weechat::weechat_sys::WEECHAT_RC_OK;

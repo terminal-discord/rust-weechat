@@ -85,6 +85,9 @@ pub trait Plugin: Sized {
     ///
     /// * `args` - Arguments passed to the plugin when it is loaded.
     fn init(weechat: &Weechat, args: Args) -> Result<Self, ()>;
+
+    /// This will be called after `init`
+    fn ready(&mut self, _weechat: &Weechat) {}
 }
 
 #[cfg(feature = "async")]
