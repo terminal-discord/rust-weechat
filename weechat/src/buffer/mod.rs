@@ -4,6 +4,7 @@ mod hotlist;
 mod lines;
 mod nick;
 mod nickgroup;
+mod notify;
 mod window;
 
 use std::{
@@ -32,6 +33,7 @@ pub use crate::buffer::{
     lines::{BufferLine, BufferLines, LineData},
     nick::{Nick, NickSettings},
     nickgroup::NickGroup,
+    notify::NotifyLevel,
     window::Window,
 };
 
