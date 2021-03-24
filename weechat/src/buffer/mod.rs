@@ -1445,4 +1445,14 @@ impl Buffer<'_> {
     pub fn mark_read(&self) {
         self.set("unread", "");
     }
+
+    /// Disables print hooks for the buffer.
+    pub fn disable_print_hooks(&self) {
+        self.set("print_hooks_enabled", "0")
+    } 
+
+    /// Enables print hooks for the buffer.
+    pub fn enable_print_hooks(&self) {
+        self.set("print_hooks_enabled", "1")
+    } 
 }
