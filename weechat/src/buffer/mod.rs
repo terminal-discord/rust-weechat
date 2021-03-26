@@ -1455,4 +1455,14 @@ impl Buffer<'_> {
     pub fn enable_print_hooks(&self) {
         self.set("print_hooks_enabled", "1")
     } 
+
+    /// Sets buffer type to free content.
+    pub fn set_free_content(&self) {
+        self.set("type", "1");
+    }
+
+    /// Sets buffer type to formatted.
+    pub fn set_formatted(&self) {
+        self.set("type", "0");
+    }
 }
