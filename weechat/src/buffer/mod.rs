@@ -821,6 +821,34 @@ impl Buffer<'_> {
         }
     }
 
+    /// Display a message on a line of a buffer with free content
+    ///
+    /// # Arguments
+    ///
+    ///
+    /// * `y` - line number (first line is 0); a negative value adds a line after
+    ///         last line displayed: absolute value of y is the number of lines after
+    ///         last line (for example -1 is immediately after last line, -2 is 2 lines
+    ///         after last line)
+    ///
+    /// * `message` - The message that will be displayed.
+    pub fn print_y(&self, y: i32, message: &str) {
+        let weechat = self.weechat();
+        let printf_y = weechat.get().printf_y.unwrap();
+
+        let fmt_str = LossyCString::new("%s");
+        let message = LossyCString::new(message);
+
+        unsafe {
+            printf_y(
+                self.ptr(),
+                y,
+                fmt_str.as_ptr(),
+                message.as_ptr(),
+            )
+        }
+    }
+
     /// Search for a nicklist group by name
     ///
     /// # Arguments
@@ -1458,11 +1486,11 @@ impl Buffer<'_> {
 
     /// Sets buffer type to free content.
     pub fn set_free_content(&self) {
-        self.set("type", "1");
+        self.set("type", "free");
     }
 
     /// Sets buffer type to formatted.
     pub fn set_formatted(&self) {
-        self.set("type", "0");
+        self.set("type", "formatted");
     }
 }
