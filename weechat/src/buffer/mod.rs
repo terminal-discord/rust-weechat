@@ -991,6 +991,17 @@ impl Buffer<'_> {
         }
     }
 
+    /// Remove all nicks and groups
+    pub fn clear_nicklist(&self) {
+        let weechat = self.weechat();
+
+        let nicklist_remove_all = weechat.get().nicklist_remove_all.unwrap();
+
+        unsafe {
+            nicklist_remove_all(self.ptr())
+        }
+    }
+
     fn add_nick_helper(
         weechat: &Weechat,
         buffer_ptr: *mut t_gui_buffer,

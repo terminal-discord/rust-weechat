@@ -127,4 +127,15 @@ impl<'a> Nick<'a> {
     pub fn prefix_color(&self) -> Cow<str> {
         self.get_string("prefix_color").unwrap()
     }
+
+    /// Remove this nick.
+    pub fn remove(self) {
+        let weechat = self.get_weechat();
+
+        let nicklist_remove_nick = weechat.get().nicklist_remove_nick.unwrap();
+
+        unsafe {
+            nicklist_remove_nick(self.buf_ptr, self.ptr);
+        }
+    }
 }

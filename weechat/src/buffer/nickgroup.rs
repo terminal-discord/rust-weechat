@@ -116,4 +116,15 @@ impl<'a> NickGroup<'a> {
             })
         }
     }
+
+    /// Remove this group
+    pub fn remove(self) {
+        let weechat = self.get_weechat();
+
+        let nicklist_remove_group = weechat.get().nicklist_remove_group.unwrap();
+
+        unsafe {
+            nicklist_remove_group(self.buf_ptr, self.ptr);
+        }
+    }
 }
